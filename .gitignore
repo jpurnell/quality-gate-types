@@ -1,0 +1,6 @@
+.build/
+.DS_Store
+default.profraw
+.claude/settings.local.json
+CLAUDE.local.md
+.DS_Store
