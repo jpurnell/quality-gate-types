@@ -77,6 +77,28 @@ public struct Diagnostic: Sendable, Equatable {
         self.ruleId = ruleId
         self.suggestedFix = suggestedFix
     }
+
+    /// Backward-compatible initializer using legacy parameter names.
+    @available(*, deprecated, message: "Use init(severity:message:filePath:lineNumber:columnNumber:ruleId:suggestedFix:)")
+    public init(
+        severity: Severity,
+        message: String,
+        file: String?,
+        line: Int? = nil,
+        column: Int? = nil,
+        ruleId: String? = nil,
+        suggestedFix: String? = nil
+    ) {
+        self.init(
+            severity: severity,
+            message: message,
+            filePath: file,
+            lineNumber: line,
+            columnNumber: column,
+            ruleId: ruleId,
+            suggestedFix: suggestedFix
+        )
+    }
 }
 
 // MARK: - Codable (backward-compatible JSON decoding)
