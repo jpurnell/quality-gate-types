@@ -12,7 +12,8 @@ public struct Diagnostic: Sendable, Equatable {
         case error
         case warning
         case note
-
+		
+		/// A comparison operator for Severity.
         public static func < (lhs: Severity, rhs: Severity) -> Bool {
             let order: [Severity] = [.note, .warning, .error]
             guard let lhsIndex = order.firstIndex(of: lhs),
@@ -41,12 +42,15 @@ public struct Diagnostic: Sendable, Equatable {
     /// Whether a suggested fix is available for this diagnostic.
     public var isFixable: Bool { suggestedFix != nil }
 
+	/// Absolute path to the source file where the issue was found.
     @available(*, deprecated, renamed: "filePath")
     public var file: String? { filePath }
 
+	/// 1-based line number where the issue was detected.
     @available(*, deprecated, renamed: "lineNumber")
     public var line: Int? { lineNumber }
-
+	
+	/// 1-based column number where the issue was detected.
     @available(*, deprecated, renamed: "columnNumber")
     public var column: Int? { columnNumber }
 
@@ -110,7 +114,8 @@ extension Diagnostic: Codable {
         case filePath, lineNumber, columnNumber
         case file, line, column
     }
-
+	
+	/// Creates a new diagnostic from a Decoder.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         severity = try container.decode(Severity.self, forKey: .severity)
@@ -124,7 +129,7 @@ extension Diagnostic: Codable {
         ruleId = try container.decodeIfPresent(String.self, forKey: .ruleId)
         suggestedFix = try container.decodeIfPresent(String.self, forKey: .suggestedFix)
     }
-
+	/// Encodes a new diagnostic
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(severity, forKey: .severity)
