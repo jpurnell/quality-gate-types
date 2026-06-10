@@ -30,6 +30,8 @@ public struct CheckResult: Sendable, Codable, Equatable {
     public let diagnostics: [Diagnostic]
     /// Diagnostics that were suppressed by exemption comments or configuration.
     public let overrides: [DiagnosticOverride]
+    /// Compliance annotations verified by this checker (not violations).
+    public let complianceRecords: [ComplianceRecord]
     /// How long the check took to execute.
     public let duration: Duration
 
@@ -50,18 +52,31 @@ public struct CheckResult: Sendable, Codable, Equatable {
     ///   - status: The check status.
     ///   - diagnostics: Any diagnostics produced.
     ///   - overrides: Diagnostics suppressed by exemptions (defaults to empty).
+    ///   - complianceRecords: Compliance annotations verified (defaults to empty).
     ///   - duration: The execution duration.
     public init(
         checkerId: String,
         status: Status,
         diagnostics: [Diagnostic],
         overrides: [DiagnosticOverride] = [],
+        complianceRecords: [ComplianceRecord] = [],
         duration: Duration
     ) {
         self.checkerId = checkerId
         self.status = status
         self.diagnostics = diagnostics
         self.overrides = overrides
+        self.complianceRecords = complianceRecords
         self.duration = duration
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        checkerId = try container.decode(String.self, forKey: .checkerId)
+        status = try container.decode(Status.self, forKey: .status)
+        diagnostics = try container.decode([Diagnostic].self, forKey: .diagnostics)
+        overrides = try container.decodeIfPresent([DiagnosticOverride].self, forKey: .overrides) ?? []
+        complianceRecords = try container.decodeIfPresent([ComplianceRecord].self, forKey: .complianceRecords) ?? []
+        duration = try container.decode(Duration.self, forKey: .duration)
     }
 }
