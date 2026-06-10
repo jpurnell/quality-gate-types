@@ -70,6 +70,7 @@ public struct CheckResult: Sendable, Codable, Equatable {
         self.duration = duration
     }
 
+    /// Creates a check result by decoding from the given decoder.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         checkerId = try container.decode(String.self, forKey: .checkerId)
