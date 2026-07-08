@@ -1,4 +1,5 @@
 // swift-tools-version: 6.2
+// legibility:description: Shared Swift types for the quality-gate ecosystem.
 import PackageDescription
 
 let package = Package(
