@@ -38,6 +38,10 @@ public struct Diagnostic: Sendable, Equatable {
     public let ruleId: String?
     /// A suggested fix for the issue, if available.
     public let suggestedFix: String?
+    /// Provenance of this finding, when it did not come from a native
+    /// checker — e.g. `"plugin/swift-vigil@0.5.0"` or `"custom-rule"`
+    /// (quality-gate Phase 4b). Nil for native findings.
+    public let origin: String?
 
     /// Whether a suggested fix is available for this diagnostic.
     public var isFixable: Bool { suggestedFix != nil }
@@ -64,6 +68,7 @@ public struct Diagnostic: Sendable, Equatable {
     ///   - columnNumber: The column number (optional).
     ///   - ruleId: The rule identifier (optional).
     ///   - suggestedFix: A suggested fix (optional).
+    ///   - origin: Non-native provenance tag (optional).
     public init(
         severity: Severity,
         message: String,
@@ -71,7 +76,8 @@ public struct Diagnostic: Sendable, Equatable {
         lineNumber: Int? = nil,
         columnNumber: Int? = nil,
         ruleId: String? = nil,
-        suggestedFix: String? = nil
+        suggestedFix: String? = nil,
+        origin: String? = nil
     ) {
         self.severity = severity
         self.message = message
@@ -80,6 +86,7 @@ public struct Diagnostic: Sendable, Equatable {
         self.columnNumber = columnNumber
         self.ruleId = ruleId
         self.suggestedFix = suggestedFix
+        self.origin = origin
     }
 
     /// Backward-compatible initializer using legacy parameter names.
@@ -110,7 +117,7 @@ public struct Diagnostic: Sendable, Equatable {
 extension Diagnostic: Codable {
 
     private enum CodingKeys: String, CodingKey {
-        case severity, message, ruleId, suggestedFix
+        case severity, message, ruleId, suggestedFix, origin
         case filePath, lineNumber, columnNumber
         case file, line, column
     }
@@ -128,6 +135,7 @@ extension Diagnostic: Codable {
                     ?? container.decodeIfPresent(Int.self, forKey: .column)
         ruleId = try container.decodeIfPresent(String.self, forKey: .ruleId)
         suggestedFix = try container.decodeIfPresent(String.self, forKey: .suggestedFix)
+        origin = try container.decodeIfPresent(String.self, forKey: .origin)
     }
 	/// Encodes a new diagnostic
     public func encode(to encoder: Encoder) throws {
@@ -139,5 +147,6 @@ extension Diagnostic: Codable {
         try container.encodeIfPresent(columnNumber, forKey: .columnNumber)
         try container.encodeIfPresent(ruleId, forKey: .ruleId)
         try container.encodeIfPresent(suggestedFix, forKey: .suggestedFix)
+        try container.encodeIfPresent(origin, forKey: .origin)
     }
 }

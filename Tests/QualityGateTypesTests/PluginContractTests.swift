@@ -75,3 +75,30 @@ struct PluginContractTests {
         #expect(decoded.diagnostics.first?.ruleId == "test.stress-flip")
     }
 }
+
+@Suite("Diagnostic origin")
+struct DiagnosticOriginTests {
+
+    @Test("origin round-trips and is nil by default (native findings)")
+    func originRoundTrip() throws {
+        let native = Diagnostic(severity: .note, message: "m")
+        #expect(native.origin == nil)
+
+        let plugin = Diagnostic(
+            severity: .warning, message: "m", ruleId: "test.stress-flip",
+            origin: "plugin/swift-vigil@0.5.0")
+        let data = try JSONEncoder().encode(plugin)
+        // JSONEncoder escapes '/' — assert the key, prove the value by decode.
+        #expect(String(decoding: data, as: UTF8.self).contains("\"origin\""))
+        let decoded = try JSONDecoder().decode(Diagnostic.self, from: data)
+        #expect(decoded.origin == "plugin/swift-vigil@0.5.0")
+    }
+
+    @Test("legacy JSON without origin decodes with nil origin")
+    func legacyDecodes() throws {
+        let raw = #"{"severity":"warning","message":"m","ruleId":"r"}"#
+        let decoded = try JSONDecoder().decode(Diagnostic.self, from: Data(raw.utf8))
+        #expect(decoded.origin == nil)
+        #expect(decoded.ruleId == "r")
+    }
+}
