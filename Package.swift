@@ -12,7 +12,11 @@ let package = Package(
 		.package(url: "https://github.com/apple/swift-docc-plugin", from: "1.5.0")
 	],
     targets: [
-        .target(name: "QualityGateTypes", path: "Sources/QualityGateTypes"),
+        .target(
+            name: "QualityGateTypes",
+            path: "Sources/QualityGateTypes",
+            exclude: ["QualityGateTypes.docc"]
+        ),
         .testTarget(
             name: "QualityGateTypesTests",
             dependencies: ["QualityGateTypes"],

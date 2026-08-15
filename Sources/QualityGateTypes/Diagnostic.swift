@@ -46,6 +46,24 @@ public struct Diagnostic: Sendable, Equatable {
     /// Whether a suggested fix is available for this diagnostic.
     public var isFixable: Bool { suggestedFix != nil }
 
+    /// Whether this diagnostic asserts a defect.
+    ///
+    /// Notes describe what the checker *did* — coverage, skips, environment — and are not
+    /// violations of their rule. The distinction is load-bearing for anything that counts
+    /// findings: a checker's failure was being used as a proxy for diagnostic-level violation,
+    /// so every diagnostic a failing checker emitted was counted against its rule. That gave
+    /// `doc-code.coverage` — severity `note` in all 12,844 recorded occurrences, and emitted
+    /// precisely when the checker *succeeds* — a violation cluster no repository could drive
+    /// to zero.
+    ///
+    /// Severity decides, never the rule's name: `doc-generated.region-missing-line` reads
+    /// note-shaped and is `error` in all 639 recorded occurrences.
+    ///
+    /// This lives on the shared type deliberately. Both quality-gate-swift and the
+    /// Institutional Judgment System filter on it, and they are exactly the pair that must not
+    /// disagree about what a violation is.
+    public var isViolation: Bool { severity >= .warning }
+
 	/// Absolute path to the source file where the issue was found.
     @available(*, deprecated, renamed: "filePath")
     public var file: String? { filePath }
