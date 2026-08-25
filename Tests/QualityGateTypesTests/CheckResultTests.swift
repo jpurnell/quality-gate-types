@@ -159,7 +159,7 @@ struct CheckResultTests {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         let data = try encoder.encode(result)
-        let json = String(data: data, encoding: .utf8)!
+        let json = String(decoding: data, as: UTF8.self)
 
         #expect(json.contains("\"checkerId\""))
         #expect(json.contains("\"diagnostics\""))

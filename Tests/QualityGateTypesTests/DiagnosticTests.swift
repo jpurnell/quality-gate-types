@@ -93,7 +93,7 @@ struct DiagnosticTests {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         let data = try encoder.encode(diagnostic)
-        let json = String(data: data, encoding: .utf8)!
+        let json = String(decoding: data, as: UTF8.self)
 
         #expect(json.contains("\"filePath\""))
         #expect(json.contains("\"lineNumber\""))
@@ -108,7 +108,7 @@ struct DiagnosticTests {
     // MARK: - Legacy JSON Decoding
 
     @Test func decodesLegacyKeys() throws {
-        let legacyJSON = """
+        let legacyJSON = Data("""
         {
             "severity": "error",
             "message": "Force unwrap detected",
@@ -118,7 +118,7 @@ struct DiagnosticTests {
             "ruleId": "force-unwrap",
             "suggestedFix": "Use binding"
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         let diagnostic = try JSONDecoder().decode(Diagnostic.self, from: legacyJSON)
 
@@ -128,14 +128,14 @@ struct DiagnosticTests {
     }
 
     @Test func decodesMixedKeys() throws {
-        let mixedJSON = """
+        let mixedJSON = Data("""
         {
             "severity": "warning",
             "message": "test",
             "filePath": "Bar.swift",
             "line": 99
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         let diagnostic = try JSONDecoder().decode(Diagnostic.self, from: mixedJSON)
 
@@ -145,7 +145,7 @@ struct DiagnosticTests {
     }
 
     @Test func canonicalKeysTakePrecedenceOverLegacy() throws {
-        let bothJSON = """
+        let bothJSON = Data("""
         {
             "severity": "error",
             "message": "test",
@@ -154,7 +154,7 @@ struct DiagnosticTests {
             "lineNumber": 100,
             "line": 200
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         let diagnostic = try JSONDecoder().decode(Diagnostic.self, from: bothJSON)
 
@@ -186,7 +186,7 @@ struct DiagnosticTests {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         let data = try encoder.encode(diagnostic)
-        let json = String(data: data, encoding: .utf8)!
+        let json = String(decoding: data, as: UTF8.self)
 
         #expect(!json.contains("filePath"))
         #expect(!json.contains("lineNumber"))

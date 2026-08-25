@@ -50,7 +50,7 @@ struct DiagnosticOverrideTests {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         let data = try encoder.encode(override)
-        let json = String(data: data, encoding: .utf8)!
+        let json = String(decoding: data, as: UTF8.self)
 
         #expect(json.contains("\"ruleId\""))
         #expect(json.contains("\"justification\""))
@@ -70,7 +70,7 @@ struct DiagnosticOverrideTests {
         #expect(override.lineNumber == nil)
 
         let data = try JSONEncoder().encode(override)
-        let json = String(data: data, encoding: .utf8)!
+        let json = String(decoding: data, as: UTF8.self)
 
         #expect(!json.contains("filePath"))
         #expect(!json.contains("lineNumber"))

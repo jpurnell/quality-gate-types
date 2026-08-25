@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- Tests use non-failable UTF-8 conversions (`String(decoding:as:)`, `Data(_:utf8)`) in place of
+  force-unwrapped `String(data:encoding:)!` and `.data(using:.utf8)!`, clearing eight
+  `safety` force-unwrap errors. No API or behavior change — the package eats its own dog food.
+
 ## [1.4.0] - 2026-08-15
 
 ### Added
