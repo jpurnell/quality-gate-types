@@ -21,6 +21,26 @@ Also done: `.swiftpm/` added to `.gitignore` (it holds only Xcode user state her
 `xcuserdata`, window state, `.DS_Store`); a duplicate `.DS_Store` line removed from the same
 file; README reconciled against the actual public surface.
 
+## Closed this session
+
+### ~~Consumer adoption of `isViolation`~~ — DONE, and the 1.4.0 prediction held
+This was the load-bearing open item. It is now resolved end to end, verified rather than
+assumed:
+
+- **`quality-gate-swift` has adopted it.** Five call sites, pinned to `from: "1.4.0"` and
+  resolved at `5834f2b` (the `isViolation` commit). Critically, the adoption reaches the
+  score-affecting counting paths, not just the edges: `PulseRefiner.swift:401`,
+  `PolicyDiscoveryAuditor.swift:263,280`, and `SafetyAuditor.swift:129,161`.
+- **The corpus regenerated** — pulse `2026-08-25`, 112 violation clusters.
+- **The predicted split happened exactly.** Pure-note clusters are gone: `doc-code.coverage`
+  (was 1,903) and `doc-comment-code.coverage` (was 9,408) are both **absent** from the new
+  pulse. Error-backed clusters did not move: `exact-double-equality` at 2,194 (was 2,149) and
+  `doc-generated.region-missing-line` at 648 (was 633) — the small deltas are ordinary
+  accumulation in real code, not an artifact of the counting change.
+
+Worth keeping: the 1.4.0 note called this outcome in advance, down to which clusters would
+evaporate and which would sit still. The severity-blind counting bug is fully unwound.
+
 ## Open items
 
 ### 1. Tag a release for the `[Unreleased]` entry — small, needs a version call
@@ -28,23 +48,7 @@ file; README reconciled against the actual public surface.
 no API or behavior change, so it does not justify a release on its own. Fold it into whatever
 ships next rather than cutting a version for it.
 
-### 2. Consumer adoption of `isViolation` — the real outstanding work, cross-repo
-This is the item most likely to bite. The 1.4.0 note in `CHANGELOG.md` says it plainly:
-`isViolation` **changes every consuming project's score**, because counting used to be
-severity-blind. Every consumer must adopt it before their own filters can rely on it, and
-`quality-gate-swift` is the one that has to move first — see
-`ConsistencySeverityAndProvenance.md` in that repo for the required ordering.
-
-Two follow-on effects recorded at the time, still true:
-- Pure-note clusters (`doc-code.coverage` at 1,903; `doc-comment-code.coverage` at 9,408)
-  disappear once a pulse regenerates.
-- Error-backed clusters do not move at all (`doc-generated.region-missing-line` at 633;
-  `exact-double-equality` at 2,149).
-
-Existing corpus clusters stay wrong until regenerated. **That is a corpus operation, not a code
-one** — nothing in this repo will fix it.
-
-### 3. Deprecation warnings in `DiagnosticTests.swift:176-178` — leave them
+### 2. Deprecation warnings in `DiagnosticTests.swift:176-178` — leave them
 `file`, `line`, and `column` emit SourceKit deprecation warnings. This is deliberate: the test
 exists to prove the deprecated aliases still forward to their replacements. The warnings are the
 test doing its job, and the gate does not flag them. Silencing them would need `@available`
