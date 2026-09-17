@@ -34,6 +34,15 @@ public struct Diagnostic: Sendable, Equatable {
     public let lineNumber: Int?
     /// 1-based column number where the issue was detected.
     public let columnNumber: Int?
+    /// 1-based last line of the region this diagnostic covers, when the rule reports a region
+    /// rather than a point.
+    ///
+    /// `nil` means *this rule has not been taught to report a span* — it does not mean one
+    /// line. A rule whose finding genuinely covers a single line says so by setting `endLine`
+    /// equal to `lineNumber`. The distinction exists so that a consumer counting flagged lines
+    /// can exclude the rules it cannot measure and say which, instead of silently assuming 1:
+    /// examined nothing must not look like found nothing.
+    public let endLine: Int?
     /// Identifier for the rule that triggered this diagnostic.
     public let ruleId: String?
     /// A suggested fix for the issue, if available.
@@ -42,6 +51,25 @@ public struct Diagnostic: Sendable, Equatable {
     /// checker — e.g. `"plugin/swift-vigil@0.5.0"` or `"custom-rule"`
     /// (quality-gate Phase 4b). Nil for native findings.
     public let origin: String?
+
+    /// The inclusive line region this diagnostic covers, or `nil` when it does not report one.
+    ///
+    /// Derived rather than stored. `ClosedRange` traps when constructed with its bounds
+    /// inverted, so storing one would place a trap at every rule site that computes a region
+    /// from parsed syntax, in a codebase whose rules forbid `fatalError` and `precondition` in
+    /// production. Deriving it turns every malformed region — inverted, unanchored, or not
+    /// 1-based — into `nil`, which the consumer already has to handle.
+    public var lineSpan: ClosedRange<Int>? {
+        guard let lineNumber, let endLine, lineNumber >= 1, endLine >= lineNumber else { return nil }
+        return lineNumber...endLine
+    }
+
+    /// The number of lines this diagnostic covers, both ends included, or `nil` when it reports
+    /// no region.
+    public var lineCount: Int? {
+        guard let lineSpan else { return nil }
+        return lineSpan.upperBound - lineSpan.lowerBound + 1
+    }
 
     /// Whether a suggested fix is available for this diagnostic.
     public var isFixable: Bool { suggestedFix != nil }
@@ -87,6 +115,8 @@ public struct Diagnostic: Sendable, Equatable {
     ///   - ruleId: The rule identifier (optional).
     ///   - suggestedFix: A suggested fix (optional).
     ///   - origin: Non-native provenance tag (optional).
+    ///   - endLine: Last line of the covered region (optional; omit when the rule reports no
+    ///     region, and pass `lineNumber` when the region is a single line).
     public init(
         severity: Severity,
         message: String,
@@ -95,7 +125,8 @@ public struct Diagnostic: Sendable, Equatable {
         columnNumber: Int? = nil,
         ruleId: String? = nil,
         suggestedFix: String? = nil,
-        origin: String? = nil
+        origin: String? = nil,
+        endLine: Int? = nil
     ) {
         self.severity = severity
         self.message = message
@@ -105,6 +136,7 @@ public struct Diagnostic: Sendable, Equatable {
         self.ruleId = ruleId
         self.suggestedFix = suggestedFix
         self.origin = origin
+        self.endLine = endLine
     }
 
     /// Backward-compatible initializer using legacy parameter names.
@@ -136,7 +168,7 @@ extension Diagnostic: Codable {
 
     private enum CodingKeys: String, CodingKey {
         case severity, message, ruleId, suggestedFix, origin
-        case filePath, lineNumber, columnNumber
+        case filePath, lineNumber, columnNumber, endLine
         case file, line, column
     }
 	
@@ -154,6 +186,7 @@ extension Diagnostic: Codable {
         ruleId = try container.decodeIfPresent(String.self, forKey: .ruleId)
         suggestedFix = try container.decodeIfPresent(String.self, forKey: .suggestedFix)
         origin = try container.decodeIfPresent(String.self, forKey: .origin)
+        endLine = try container.decodeIfPresent(Int.self, forKey: .endLine)
     }
 	/// Encodes a new diagnostic
     public func encode(to encoder: Encoder) throws {
@@ -166,5 +199,6 @@ extension Diagnostic: Codable {
         try container.encodeIfPresent(ruleId, forKey: .ruleId)
         try container.encodeIfPresent(suggestedFix, forKey: .suggestedFix)
         try container.encodeIfPresent(origin, forKey: .origin)
+        try container.encodeIfPresent(endLine, forKey: .endLine)
     }
 }

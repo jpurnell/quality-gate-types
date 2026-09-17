@@ -14,8 +14,7 @@ let package = Package(
     targets: [
         .target(
             name: "QualityGateTypes",
-            path: "Sources/QualityGateTypes",
-            exclude: ["QualityGateTypes.docc"]
+            path: "Sources/QualityGateTypes"
         ),
         .testTarget(
             name: "QualityGateTypesTests",
