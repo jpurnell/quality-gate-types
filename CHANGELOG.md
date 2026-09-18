@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-09-18
+
+### Added
+- **`StringProtocol.lines`**, moved here from `quality-gate-swift`'s `QualityGateCore`.
+
+  It carries no gate or corpus semantics — it splits text into lines — but it had become part
+  of the static-analysis package's public surface by accident. `quality-gate-dashboard` was
+  reaching it transitively, and the moment that package stopped depending on the gate
+  (`SeparatingTheJudgmentLayer.md` §3.2), a Markdown renderer stopped compiling over a string
+  helper. Both packages already depend on this one, so this is where it belongs.
+
+  `QualityGateCore` re-exports this module, so every existing call site in `quality-gate-swift`
+  is unchanged.
+
+  It is worth keeping rather than inlining, because the three obvious ways to split a string
+  into lines are each wrong on a file written on Windows, and each differently: `"a\r\nb"`
+  becomes `["a\r\nb"]` under `split(separator: "\n")` (CRLF is a single `Character`, so it
+  never matches), `["a\r", "b"]` under `components(separatedBy: "\n")` (which searches by
+  scalar), and `["a", "", "b"]` under `components(separatedBy: .newlines)` (which counts both
+  scalars). The last is the one people reach for *while fixing* the first two, and it is the
+  worst for an auditor: doubling a file's line count shifts every line number it reports.
+
+  Eight tests came with it. A ninth was written and removed the same hour, which is the useful
+  part: it asserted what each wrong spelling *returns*, which means calling all three — and
+  those three calls are precisely what `safety`'s `newline-split` rule forbids. The gate
+  rejected the commit, correctly. A demonstration of banned code is still banned code, the doc
+  comment's table already records the three results, and the surviving tests pin the claim that
+  matters: whatever the alternatives do, `lines` splits each terminator exactly once.
+
+
 ## [1.5.0] - 2026-09-17
 
 ### Added
