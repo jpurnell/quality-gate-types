@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **iOS 18 platform declaration.** The package declared only macOS, so SwiftPM built it for iOS 12 and `Duration` failed to compile. Nothing else changed; the library had no macOS-only code.
+
+### Fixed
+- `QualityGateLoggingTests` no longer call `setenv("QG_LOG")`. The process environment is shared by tests running in parallel, so one test enabling logging made `silentByDefault` fail under `swift test --parallel`. `QGLogger` has an internal initialiser that takes the environment; the public API is unchanged.
+
+### Removed
+- The test of `Diagnostic.file`, `.line` and `.column`, the deprecated aliases of `filePath`, `lineNumber` and `columnNumber`. It was the only caller of them and produced the package's only compiler warnings. The aliases themselves remain.
+
+## [1.7.0] - 2026-09-29
+
+### Added
+- **`QualityGateLogging`**, a second library product: `os.Logger`'s surface on platforms that have no `os`.
+
+  Linux CI failed with `cannot find 'Logger' in scope`: 121 files across four packages guard `import os` behind `canImport(os)` and then use `Logger` unguarded, so nothing had ever compiled those paths. The shim provides `Logger`, `OSLogPrivacy` and a privacy-aware interpolation so all of those call sites compile unchanged. It lives here because this is the leaf the other packages already depend on.
+
+  It is compiled on every platform under its own names (`QGLogger`, `QGLogMessage`, `QGLogPrivacy`) and aliased to Apple's spellings only where Apple's are absent, so a macOS developer's build and tests exercise it. It is silent unless `QG_LOG` is set to a non-empty value, which routes messages to stderr.
+
 ## [1.6.0] - 2026-09-18
 
 ### Added

@@ -11,6 +11,9 @@ import Testing
 @Suite("QualityGateLogging")
 struct QualityGateLoggingTests {
 
+    /// An injected environment with logging on. The tests never touch the process environment.
+    private static let loggingOn: [String: String] = ["QG_LOG": "1"]
+
     @Test("A literal message renders as itself")
     func literalRendersUnchanged() {
         let message: QGLogMessage = "adopt: config resolution failed"
@@ -47,9 +50,7 @@ struct QualityGateLoggingTests {
         // warning 227, error 26, debug 16, info 12, notice 6 — the counts measured across
         // quality-gate-swift. A missing method is a compile error in 43 targets, so this
         // test is about the surface existing at all.
-        setenv("QG_LOG", "1", 1)
-        defer { unsetenv("QG_LOG") }
-        let logger = QGLogger(subsystem: "com.quality-gate", category: "Test")
+        let logger = QGLogger(subsystem: "com.quality-gate", category: "Test") { Self.loggingOn }
         let value = "x"
 
         // Calling each method proves the surface exists — a missing one is a compile error
@@ -74,27 +75,20 @@ struct QualityGateLoggingTests {
         // os.Logger writes to the unified log, not the terminal, so a CLI using it prints
         // nothing extra. A shim that wrote 287 call sites to stderr would change what this
         // tool's output *is* on Linux — every run a wall of diagnostics.
-        let logger = QGLogger(subsystem: "com.quality-gate", category: "Test")
-        let unset = ProcessInfo.processInfo.environment["QG_LOG"]?.isEmpty ?? true
-        if unset {
-            #expect(logger.renderedLine("WARNING", "anything") == nil)
-        }
+        let logger = QGLogger(subsystem: "com.quality-gate", category: "Test") { [:] }
+        #expect(logger.renderedLine("WARNING", "anything") == nil)
     }
 
     @Test("A rendered line names its level and its subsystem")
     func renderedLineIsTagged() throws {
-        setenv("QG_LOG", "1", 1)
-        defer { unsetenv("QG_LOG") }
-        let logger = QGLogger(subsystem: "com.quality-gate", category: "Adopt")
+        let logger = QGLogger(subsystem: "com.quality-gate", category: "Adopt") { Self.loggingOn }
         let line = try #require(logger.renderedLine("WARNING", "ledger unreadable"))
         #expect(line == "WARNING [com.quality-gate:Adopt] ledger unreadable\n")
     }
 
     @Test("An untagged logger omits the bracket rather than printing an empty one")
     func untaggedLoggerHasNoBrackets() throws {
-        setenv("QG_LOG", "1", 1)
-        defer { unsetenv("QG_LOG") }
-        let line = try #require(QGLogger().renderedLine("INFO", "hello"))
+        let line = try #require(QGLogger(subsystem: "", category: "") { Self.loggingOn }.renderedLine("INFO", "hello"))
         #expect(line == "INFO hello\n")
     }
 }

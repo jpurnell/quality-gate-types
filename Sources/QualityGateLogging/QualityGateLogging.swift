@@ -83,11 +83,22 @@ public struct QGLogMessage: ExpressibleByStringLiteral, ExpressibleByStringInter
 public struct QGLogger: Sendable {
     private let subsystem: String
     private let category: String
+    private let environment: @Sendable () -> [String: String]
 
     /// Creates a logger tagged with a subsystem and category, as Apple's is.
     public init(subsystem: String, category: String) {
+        self.init(subsystem: subsystem, category: category) { ProcessInfo.processInfo.environment }
+    }
+
+    /// Creates a logger that reads `QG_LOG` from `environment` instead of the process.
+    ///
+    /// Tests use this so they never call `setenv`: the process environment is shared by every
+    /// test running in parallel, and a test that sets `QG_LOG` makes a neighbour that expects
+    /// silence fail.
+    init(subsystem: String, category: String, environment: @escaping @Sendable () -> [String: String]) {
         self.subsystem = subsystem
         self.category = category
+        self.environment = environment
     }
 
     /// Creates an untagged logger.
@@ -129,7 +140,7 @@ public struct QGLogger: Sendable {
     /// decision to write and the text written are separable, and only one of them needs a
     /// process to observe.
     public func renderedLine(_ level: String, _ message: QGLogMessage) -> String? {
-        guard let enabled = ProcessInfo.processInfo.environment["QG_LOG"], !enabled.isEmpty else {
+        guard let enabled = environment()["QG_LOG"], !enabled.isEmpty else {
             return nil
         }
         let tag = subsystem.isEmpty && category.isEmpty ? "" : "[\(subsystem):\(category)] "
