@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-10-25
+
 ### Added
 - **iOS 18 platform declaration.** The package declared only macOS, so SwiftPM built it for iOS 12 and `Duration` failed to compile. Nothing else changed; the library had no macOS-only code.
 
