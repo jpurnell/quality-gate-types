@@ -162,22 +162,6 @@ struct DiagnosticTests {
         #expect(diagnostic.lineNumber == 100)
     }
 
-    // MARK: - Deprecated Aliases
-
-    @Test func deprecatedAliasesReturnSameValues() {
-        let diagnostic = Diagnostic(
-            severity: .error,
-            message: "test",
-            filePath: "Foo.swift",
-            lineNumber: 42,
-            columnNumber: 15
-        )
-
-        #expect(diagnostic.file == diagnostic.filePath)
-        #expect(diagnostic.line == diagnostic.lineNumber)
-        #expect(diagnostic.column == diagnostic.columnNumber)
-    }
-
     // MARK: - Nil Optionals
 
     @Test func nilOptionalsEncodedCorrectly() throws {
